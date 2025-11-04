@@ -1,6 +1,7 @@
+// ...existing code...
 import { StyleSheet } from 'react-native';
-import styles from "./style";
-
+// ...existing code...
+// removed: import styles from "./style";
 
 export default StyleSheet.create({
     container: {
@@ -8,8 +9,6 @@ export default StyleSheet.create({
         backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
-
-
     },
     TextInput: {
         height: 40,
@@ -19,7 +18,6 @@ export default StyleSheet.create({
         paddingHorizontal: 10,
         width: '80%',
     },
-    
     title: {
         fontSize: 24,
         fontWeight: 'bold',
@@ -32,3 +30,4 @@ export default StyleSheet.create({
         justifyContent: 'center',
     },
 })
+// ...existing code...

@@ -1,69 +1,94 @@
+// ...existing code...
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, FlatList, ActivityIndicator } from 'react-native';
 import axios from 'axios';
+import { View, Text, FlatList, Button, Alert, ActivityIndicator } from 'react-native';
+import styles from '../style';
 
-export default function UserListPage({ navigation }) {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function UserListPage() {
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    axios
-      .get('http://192.168.30.114:8000/registration/api/users/')
-      .then(response => {
-        setUsers(response.data);
-        setLoading(false);
-      })
-      .catch(error => {
-        console.error(error);
-        setLoading(false);
-      });
-  }, []);
+    useEffect(() => {
+        axios.get('http://192.168.30.114:8000/registration/api/users/')
+            .then((response) => {
+                console.log('users response:', response.data);
+                const data = response.data;
+                if (Array.isArray(data)) {
+                    setUsers(data);
+                } else if (data && Array.isArray(data.results)) {
+                    setUsers(data.results);
+                } else {
+                    console.warn('Unexpected users response shape, setting empty list');
+                    setUsers([]);
+                }
+            })
+            .catch((error) => {
+                console.error('users fetch error:', error.response?.data || error.message);
+                setUsers([]);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, []);
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#2b17a5" />
-        <Text>Loading users...</Text>
-      </View>
-    );
-  }
+    const handleDelete = (id) => {
+        Alert.alert(
+            "Confirm Delete",
+            "Are you sure you want to delete this user?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        axios.delete(`http://192.168.30.114:8000/registration/api/users/${id}/`)
+                            .then(() => {
+                                setUsers(prev => prev.filter(u => u.id !== id));
+                                Alert.alert("Success", "User deleted successfully");
+                            })
+                            .catch((err) => {
+                                console.error(err);
+                                Alert.alert("Error", "Failed to delete user");
+                            });
+                    }
+                }
+            ]
+        );
+    };
 
-  return (
-    <View style={{ padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>
-        View all Users
-      </Text>
+    const handleEdit = (item) => {
+        Alert.alert("Edit", `Edit not implemented for ${item.first_name || ''} ${item.last_name || ''}`);
+    };
 
-      <FlatList
-        data={users}
-        keyExtractor={item => item.id.toString()}
-        renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 10,
-              marginBottom: 10,
-              backgroundColor: '#f2f2f2',
-              borderRadius: 8,
-            }}
-          >
-            <Text style={{ fontWeight: 'bold' }}>
-              {item.last_name} {item.first_name}
-            </Text>
-            <Text>Email: {item.email}</Text>
-            <Text>Gender: {item.gender}</Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginTop: 8,
-              }}
-            >
-              <Button title="Edit" color="#49a43e" />
-              <Button title="Delete" color="#f14545" />
+    if (loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" color="#2b17a5" />
+                <Text>Loading users...</Text>
             </View>
-          </View>
-        )}
-      />
-    </View>
-  );
+        );
+    }
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Users List</Text>
+            <FlatList
+                data={users}
+                keyExtractor={(item, index) => (item && item.id ? String(item.id) : String(index))}
+                ListEmptyComponent={() => <Text>No users found</Text>}
+                renderItem={({ item }) => (
+                    <View style={{ marginBottom: 12, width: '90%' }}>
+                        <Text>{(item.last_name || '') + ' ' + (item.first_name || '')}</Text>
+                        <Text>Password: {item.password}</Text>
+                        <Text>Email: {item.email}</Text>
+                        <Text>Gender: {item.gender}</Text>
+                        <Text>-----------------------------</Text>
+                        <Button title="Edit" onPress={() => handleEdit(item)} />
+                        <Button title="Delete" color="#d9534f" onPress={() => handleDelete(item.id)} />
+                    </View>
+                )}
+            />
+        </View>
+    );
 }
+// ...existing code...
